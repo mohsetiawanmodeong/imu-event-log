@@ -1,0 +1,4 @@
+time_utc,loc_x,loc_y,prox_warn,area,fimu_x,fimu_y,rimu_x,rimu_y,speed_ms,machine,ros_id,control,state,mas_codes
+2025-02-14 04:12:13,20.8492,7.12546,0,KL-IntakeDev,0.36,-22.25,-32738,-32738,-1.562,Unknown,Unknown,Teleremote,Haul,9182-
+2025-02-14 04:14:08,17.95,18.596,0,KL-IntakeDev,13.66,-8.67,-32738,-32738,-1.094,Unknown,Unknown,Teleremote,Haul,9182-
+2025-02-14 04:16:47,34.9161,9.53949,0,KL-IntakeDev,12.72,5.54,-32738,-32738,1.163,Unknown,Unknown,Teleremote,Haul,9182-
