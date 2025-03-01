@@ -161,51 +161,62 @@ def main():
 
     print("\nINFO: No further files in the folder to review\n")
 
-    """
-    # setting call variables for psql command
-    print("INFO: Connecting to local database to retrieve site configuration data")
-    hostOpt = 'localhost'
-    databaseOpt = 'local_db'
-    userOpt = 'las'
-    portOpt = '5432'
-    sepOpt = ','
-    VehicleList_Query = 'SELECT type_id, value FROM unit_config_table WHERE type_id >= 1000 AND parameter = \'UnitVehicle\';'
-    VehicleList_Path = '/data/common/vehicle_list.csv'
-    AreaList_Query = 'SELECT * FROM area_type;'
-    AreaList_Path = '/data/common/area_list.csv'
-    ROSList_Query = 'SELECT * FROM unit_type WHERE type_id >= 100 AND type_id <1000;'
-    ROSList_Path = '/data/common/ros_list.csv'
+    print("INFO: Reading configuration from existing CSV files")
+    
+    # Original code - commented out
+    #with open(AreaList_Path, 'r') as file: # build dictionary for area_id for map name retrieval
+    #    reader = csv.reader(file)
+    #    next(reader, None)
+    #    usable_rows = list(reader)
+    #    area_name_list = {row[0]: row[1].strip() for row in usable_rows[:-1]}
 
-    print("INFO: Generating temporary CSV files to store site configuration data")
-    # run psql command to generate CSV tables for vehicle_type and area_type tables of local_db
-    call(['psql','-h',hostOpt,'-d',databaseOpt,'-U',userOpt,'-p',portOpt,'-c',VehicleList_Query,'-o',VehicleList_Path,'-A','-F',sepOpt])
-    call(['psql','-h',hostOpt,'-d',databaseOpt,'-U',userOpt,'-p',portOpt,'-c',AreaList_Query,'-o',AreaList_Path,'-A','-F',sepOpt])
-    call(['psql','-h',hostOpt,'-d',databaseOpt,'-U',userOpt,'-p',portOpt,'-c',ROSList_Query,'-o',ROSList_Path,'-A','-F',sepOpt])
-
-    print("INFO: Generating lookup tables from site configuration CSV files")
-    with open(VehicleList_Path, 'r') as file: # build dictionary for vehicle_id for machine name retrieval
+    # New code for reading area list
+    with open(AreaList_Path, 'r') as file:
         reader = csv.reader(file)
-        next(reader, None)
-        usable_rows = list(reader)
-        vehicle_name_list = {row[0]: row[1].strip() for row in usable_rows[:-1]}
+        next(reader, None)  # Skip header
+        area_name_list = {}
+        for row in reader:
+            if len(row) >= 2 and not row[0].startswith('('):  # Skip footer row
+                area_name_list[row[0]] = row[1].strip()
 
-    with open(AreaList_Path, 'r') as file: # build dictionary for area_id for map name retrieval
-        reader = csv.reader(file)
-        next(reader, None)
-        usable_rows = list(reader)
-        area_name_list = {row[0]: row[1].strip() for row in usable_rows[:-1]}
+    # Original code - commented out
+    #with open(ROSList_Path, 'r') as file: # build dictionary for sponsor_id for ROS name retrieval
+    #    reader = csv.reader(file)
+    #    next(reader, None)
+    #    usable_rows = list(reader)
+    #    ros_name_list = {row[0]: row[1].strip() for row in usable_rows[:-1]}
 
-    with open(ROSList_Path, 'r') as file: # build dictionary for sponsor_id for ROS name retrieval
+    # New code for reading ROS list
+    with open(ROSList_Path, 'r') as file:
         reader = csv.reader(file)
-        next(reader, None)
-        usable_rows = list(reader)
-        ros_name_list = {row[0]: row[1].strip() for row in usable_rows[:-1]}
+        next(reader, None)  # Skip header
+        ros_name_list = {}
+        for row in reader:
+            if len(row) >= 2 and not row[0].startswith('('):  # Skip footer row
+                ros_name_list[row[0]] = row[1].strip()
+
+    # Original code - commented out
+    #with open(VehicleList_Path, 'r') as file: # build dictionary for vehicle_id for machine name retrieval
+    #    reader = csv.reader(file)
+    #    next(reader, None)
+    #    usable_rows = list(reader)
+    #    vehicle_name_list = {row[0]: row[1].strip() for row in usable_rows[:-1]}
+
+    # New code for reading vehicle list - with debug print
+    with open(VehicleList_Path, 'r') as file:
+        reader = csv.reader(file)
+        next(reader, None)  # Skip header
+        vehicle_name_list = {}
+        for row in reader:
+            if len(row) >= 2 and not row[0].startswith('('):  # Skip footer row
+                vehicle_name_list[row[0]] = row[1].strip()
+        print("DEBUG: Loaded vehicle IDs:", vehicle_name_list)  # Debug print
 
     # build array of values for 'control' and 'state' types
     control_list = {'0': 'Teleremote', '1': 'Copilot', '2': 'Autopilot', '3': 'Recovery'}
     state_list = {'0': 'Load', '1': 'Haul', '2': 'Dump'}
 
-    # read existing CSV output file from IMU processing and create new array of updated decoded values
+    # read existing CSV output file and update values - with debug print
     print("INFO: Decoding telemetry values in CSV output file")
     with open(output_file, 'r') as file:
         reader = csv.reader(file)
@@ -217,11 +228,19 @@ def main():
             sponsor_id = row[11]
             control_num = row[12]
             state_num = row[13]
-            area_id = area_name_list.get(map_id, 'Unknown') # if value is not found in area_name_list, return unknown area
-            machine_id = vehicle_name_list.get(vehicle_id, 'Unknown') # if value is not found in vehicle_name_list, return unknown vehicle
-            ros_id = ros_name_list.get(sponsor_id, 'Unknown') # if value is not found in ros_name_list, return unknown ros
-            control = control_list.get(control_num)
-            state = state_list.get(state_num)
+            
+            print(f"DEBUG: Looking up vehicle_id: {vehicle_id}")  # Debug print
+            
+            # Lookup values in dictionaries
+            area_id = area_name_list.get(map_id, 'Unknown')
+            machine_id = vehicle_name_list.get(vehicle_id, 'Unknown')
+            ros_id = ros_name_list.get(sponsor_id, 'Unknown')
+            control = control_list.get(control_num, 'Unknown')
+            state = state_list.get(state_num, 'Unknown')
+            
+            print(f"DEBUG: Found machine_id: {machine_id}")  # Debug print
+            
+            # Update row with decoded values
             row[4] = area_id
             row[10] = machine_id
             row[11] = ros_id
@@ -229,22 +248,18 @@ def main():
             row[13] = state
             updated_csv.append(row)
 
-    with open(output_file, 'w') as file: # write new array of updated values to existing CSV output file
+    # Write updated data with header
+    with open(output_file, 'w', newline='') as file:
         writer = csv.writer(file)
         header = ['time_utc','loc_x','loc_y','prox_warn','area','fimu_x','fimu_y','rimu_x','rimu_y','speed_ms','machine','ros_id','control','state','mas_codes']
         writer.writerow(header)
         writer.writerows(updated_csv)
 
     # delete temporary csv reference files
-    print("INFO: Cleaning up...")
-    os.remove(VehicleList_Path)
-    os.remove(AreaList_Path)
-    os.remove(ROSList_Path)
-    """
-
-    print("INFO: Reading configuration from existing CSV files")
-    # Continue with existing code to read CSV files
-    # ... rest of the code ...
+    # print("INFO: Cleaning up...")
+    # os.remove(VehicleList_Path)
+    # os.remove(AreaList_Path)
+    # os.remove(ROSList_Path)
 
 if __name__ == "__main__":
     main()
