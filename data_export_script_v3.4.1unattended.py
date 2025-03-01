@@ -93,15 +93,16 @@ def process_database(db_path,output_file,param_x,param_y): # process the selecte
     results = cur.fetchall() # get results from query
     print("INFO: Number of events found in file:", len(results))
     print("INFO: Writing filtered IMU event data to CSV output file")
-#    if os.path.exists(output_file): # check if CSV output file already exists
-#        file_counter = 1
-#    else:
-#        file_counter = 0
+    if os.path.exists(output_file): # check if CSV output file already exists
+        file_counter = 1
+    else:
+        file_counter = 0
+    
     with open(output_file, 'a', newline='') as f_handle: # opens the CSV output file to append data
         writer = csv.writer(f_handle)
-#        if file_counter == 0: # if output file doesn't already exist
-#            header = ['time_utc','loc_x','loc_y','prox_warn','area_id','fimu_x','fimu_y','rimu_x','rimu_y','speed_ms','machine_id','ros_id','control','state','mas_codes']
-#            writer.writerow(header)
+        if file_counter == 0: # if output file doesn't already exist
+            header = ['time_utc','loc_x','loc_y','prox_warn','area_id','fimu_x','fimu_y','rimu_x','rimu_y','speed_ms','machine_id','ros_id','control','state','mas_codes']
+            writer.writerow(header)
         for row in results: # for each row of data from the query results, writes the data to the output file
             writer.writerow(row)
 
@@ -110,10 +111,28 @@ def process_database(db_path,output_file,param_x,param_y): # process the selecte
     os.remove('temp.db') # delete temp database
 
 def main():
-    db_directory = '/data/sqlogger/' # set folder
-    now = datetime.now() # get current time
-    cur_datetime_abrv = now.strftime("%Y-%m-%d_%H%M%S") # reformat current time
-    output_file = '/data/common/IMU_event_log_'+cur_datetime_abrv+'.csv' # create CSV file path/name with current time stamp
+    # Get current time first
+    now = datetime.now()
+    cur_datetime_abrv = now.strftime("%Y-%m-%d_%H%M%S")
+
+    # Original Linux path (comment this when running on Windows)
+    #db_directory = '/data/sqlogger/'
+    #output_file = '/data/common/IMU_event_log_'+cur_datetime_abrv+'.csv'
+    
+    # Windows path (uncomment this when running on Windows)
+    db_directory = './data/sqlogger/'
+    output_file = './data/common/IMU_event_log_'+cur_datetime_abrv+'.csv'
+    
+    # Original Linux path (comment these when running on Windows)
+    #VehicleList_Path = '/data/common/vehicle_list.csv'
+    #AreaList_Path = '/data/common/area_list.csv'
+    #ROSList_Path = '/data/common/ros_list.csv'
+
+    # Windows path (uncomment these when running on Windows)
+    VehicleList_Path = './data/common/vehicle_list.csv'
+    AreaList_Path = './data/common/area_list.csv'
+    ROSList_Path = './data/common/ros_list.csv'
+
     file_count = 0 # initialize file count
     for filename in os.listdir(db_directory): # for each file in the folder
         date_str = filename.split('_')[1] # get date from file name
@@ -142,6 +161,7 @@ def main():
 
     print("\nINFO: No further files in the folder to review\n")
 
+    """
     # setting call variables for psql command
     print("INFO: Connecting to local database to retrieve site configuration data")
     hostOpt = 'localhost'
@@ -220,6 +240,11 @@ def main():
     os.remove(VehicleList_Path)
     os.remove(AreaList_Path)
     os.remove(ROSList_Path)
+    """
+
+    print("INFO: Reading configuration from existing CSV files")
+    # Continue with existing code to read CSV files
+    # ... rest of the code ...
 
 if __name__ == "__main__":
     main()
